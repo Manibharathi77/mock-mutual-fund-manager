@@ -1,0 +1,12 @@
+package com.cams.mutualfund.repository;
+
+import com.cams.mutualfund.data.dao.Nav;
+import com.cams.mutualfund.data.dao.Script;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+public interface NavRepository extends JpaRepository<Nav, Long> {
+    Optional<Nav> findByScriptAndDate(Script script, LocalDate date);
+}
