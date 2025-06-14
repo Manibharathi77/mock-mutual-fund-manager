@@ -180,11 +180,14 @@ mvn dependency-check:check
 ```
 
 ## Best Practices Implemented
-- Bidirectional entity relationships with proper JPA annotations
 - Global exception handling for consistent error responses
 - Uniform response structure for error and success scenarios
 - Role-based security with proper endpoint protection
-- Code coverage enforcement with JaCoCo
-- Security vulnerability scanning with OWASP
+- Code coverage enforcement with JaCoCo (over 90%)
+- Security vulnerability scanning with OWASP for dependencies used
 - Easier unit testing by opting for constructor injection over setter injection
-- Interface too supports for easier testing.
+- Interface to promote depending on abstraction and facilitate easier mocks during testing
+- SOLID and DRY design
+- Identified the potential places for implementing design pattern
+- OpenAPI documentation
+- Custom exceptions (implemented 1 for reference)
