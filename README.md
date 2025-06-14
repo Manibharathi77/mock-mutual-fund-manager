@@ -59,6 +59,61 @@ The application implements a security model using Spring Security with Basic Aut
 - **Script** - Represents mutual fund schemes
 - **Nav** - Tracks Net Asset Value for mutual funds
 
+## ER Diagram
+
+![Editor _ Mermaid Chart-2025-06-14-151836.png](src%2Fmain%2Fresources%2FERDiagram%2FEditor%20_%20Mermaid%20Chart-2025-06-14-151836.png)
+
+```mermaid
+erDiagram
+    CamsUser {
+        Long id PK
+        String username
+        String password
+        Roles role
+    }
+    
+    Script {
+        Long id PK
+        String fundCode
+        String name
+        String category
+        String amc
+        boolean active
+    }
+    
+    Nav {
+        Long id PK
+        LocalDate date
+        Double navValue
+        Long script_id FK
+    }
+    
+    Transaction {
+        Long id PK
+        TransactionType type
+        Double navValue
+        Double amount
+        Double units
+        LocalDate transactionDate
+        Long cams_user_id FK
+        Long script_id FK
+    }
+    
+    UserHolding {
+        Long id PK
+        Double units
+        Double totalValue
+        LocalDate lastUpdated
+        Long user_id FK
+        Long script_id FK
+    }
+    
+    CamsUser ||--o{ Transaction : "has"
+    CamsUser ||--o{ UserHolding : "has"
+    Script ||--o{ Nav : "has"
+    Script ||--o{ Transaction : "involved in"
+    Script ||--o{ UserHolding : "held as"
+```
 
 ## Exception Handling
 The application implements a comprehensive exception handling strategy:
