@@ -36,7 +36,7 @@ public class UserTransactionController {
                 content = @Content(schema = @Schema(implementation = UserPortfolioDTO.class))),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
-    public ResponseEntity<ApiResponseDto<UserPortfolioDTO>> getUserPortfolio(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponseDto<?>> getUserPortfolio(@PathVariable Long userId) {
         logger.info("Fetching portfolio for user ID: {}", userId);
         UserPortfolioDTO portfolio = userTransactionService.getUserPortfolio(userId);
         logger.info("Portfolio fetched successfully for user ID: {}", userId);

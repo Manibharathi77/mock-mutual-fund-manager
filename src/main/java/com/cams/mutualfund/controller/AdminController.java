@@ -42,7 +42,7 @@ public class AdminController {
             @ApiResponse(responseCode = "201", description = "Script created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    public ResponseEntity<ApiResponseDto<Script>> createScript(@Valid @RequestBody CreateScriptRequest request) {
+    public ResponseEntity<ApiResponseDto<?>> createScript(@Valid @RequestBody CreateScriptRequest request) {
         logger.info("Creating new script with code: {}", request.fundCode());
         Script created = adminService.createScript(request);
         logger.info("Script created successfully with ID: {}", created.getId());
@@ -89,7 +89,7 @@ public class AdminController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "409", description = "Username already exists")
     })
-    public ResponseEntity<ApiResponseDto<UserDTO>> registerUser(@Valid @RequestBody UserRegistrationRequest user) {
+    public ResponseEntity<ApiResponseDto<?>> registerUser(@Valid @RequestBody UserRegistrationRequest user) {
         logger.info("Received registration request for username: {}", user.username());
         UserDTO registeredUser = adminService.registerUser(user);
         logger.info("User registration successful for username: {}", user.username());
