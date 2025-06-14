@@ -3,7 +3,7 @@ package com.cams.mutualfund.controller;
 import com.cams.mutualfund.data.dto.ApiResponseDto;
 import com.cams.mutualfund.data.dto.UserPortfolioDTO;
 import com.cams.mutualfund.data.request.TransactionRequest;
-import com.cams.mutualfund.service.UserTransactionService;
+import com.cams.mutualfund.facade.IUserTransactionFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,10 +23,10 @@ public class UserTransactionController {
 
     private static final Logger logger = LogManager.getLogger(UserTransactionController.class);
     
-    private final UserTransactionService userTransactionService;
+    private final IUserTransactionFacade userTransactionFacade;
 
-    public UserTransactionController(UserTransactionService userTransactionService) {
-        this.userTransactionService = userTransactionService;
+    public UserTransactionController(IUserTransactionFacade userTransactionFacade) {
+        this.userTransactionFacade = userTransactionFacade;
     }
 
     @GetMapping("/portfolio/{userId}")
@@ -38,7 +38,7 @@ public class UserTransactionController {
     })
     public ResponseEntity<ApiResponseDto<?>> getUserPortfolio(@PathVariable Long userId) {
         logger.info("Fetching portfolio for user ID: {}", userId);
-        UserPortfolioDTO portfolio = userTransactionService.getUserPortfolio(userId);
+        UserPortfolioDTO portfolio = userTransactionFacade.getUserPortfolio(userId);
         logger.info("Portfolio fetched successfully for user ID: {}", userId);
         return ResponseEntity.ok(ApiResponseDto.ok("Portfolio retrieved successfully", portfolio));
     }
@@ -53,7 +53,7 @@ public class UserTransactionController {
     public ResponseEntity<ApiResponseDto<?>> buyUnits(@Valid @RequestBody TransactionRequest request) {
         logger.info("Processing buy request - User ID: {}, Script ID: {}, Units: {}", 
                 request.userId(), request.scriptId(), request.units());
-        userTransactionService.buyUnits(request.userId(), request.scriptId(), request.units());
+        userTransactionFacade.buyUnits(request.userId(), request.scriptId(), request.units());
         logger.info("Units purchased successfully for User ID: {}, Script ID: {}", 
                 request.userId(), request.scriptId());
         return ResponseEntity.ok(ApiResponseDto.success("Units purchased successfully"));
@@ -69,7 +69,7 @@ public class UserTransactionController {
     public ResponseEntity<ApiResponseDto<?>> redeemUnits(@Valid @RequestBody TransactionRequest request) {
         logger.info("Processing redemption request - User ID: {}, Script ID: {}, Units: {}", 
                 request.userId(), request.scriptId(), request.units());
-        userTransactionService.redeemUnits(request.userId(), request.scriptId(), request.units());
+        userTransactionFacade.redeemUnits(request.userId(), request.scriptId(), request.units());
         logger.info("Units redeemed successfully for User ID: {}, Script ID: {}", 
                 request.userId(), request.scriptId());
         return ResponseEntity.ok(ApiResponseDto.success("Units redeemed successfully"));
