@@ -2,7 +2,10 @@ package com.cams.mutualfund.service;
 
 import com.cams.mutualfund.data.TransactionType;
 import com.cams.mutualfund.data.dao.*;
+import com.cams.mutualfund.data.dto.UserHoldingDTO;
+import com.cams.mutualfund.data.dto.UserPortfolioDTO;
 import com.cams.mutualfund.repository.*;
+import jakarta.persistence.EntityNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -10,6 +13,9 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserTransactionService {
@@ -182,5 +188,180 @@ public class UserTransactionService {
                     unitsToRedeem, holding.getUnits());
             throw new IllegalArgumentException("Insufficient units to redeem. Available: " + holding.getUnits());
         }
+    }
+
+    /**
+     * Get the complete portfolio for a user with profit/loss information
+     * 
+     * @param userId The ID of the user
+     * @return UserPortfolioDTO containing all holdings with profit/loss information
+     */
+    public UserPortfolioDTO getUserPortfolio(Long userId) {
+        logger.info("Fetching portfolio for user ID: {}", userId);
+        
+        // Use the existing findUser method to maintain consistency
+        CamsUser user = findUser(userId);
+        List<UserHolding> holdings = userHoldingRepository.findByCamsUser(user);
+
+        if (holdings.isEmpty()) {
+            logger.info("No holdings found for user ID: {}", userId);
+            return createEmptyPortfolio(user);
+        }
+
+        // Process holdings and calculate portfolio metrics
+        PortfolioSummary summary = processHoldings(holdings);
+        
+        logger.info("Portfolio fetched successfully for user ID: {}", userId);
+        return summary.toPortfolioDTO(user);
+    }
+    
+    /**
+     * Create an empty portfolio DTO for a user with no holdings
+     */
+    private UserPortfolioDTO createEmptyPortfolio(CamsUser user) {
+        return new UserPortfolioDTO(
+            user.getId(),
+            user.getUsername(),
+            List.of(),
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        );
+    }
+    
+    /**
+     * Process all holdings to calculate current values and profit/loss
+     * 
+     * @param holdings List of user holdings to process
+     * @return PortfolioSummary containing processed holdings and aggregate metrics
+     */
+    private PortfolioSummary processHoldings(List<UserHolding> holdings) {
+        List<UserHoldingDTO> holdingDTOs = new ArrayList<>();
+        double totalInvestedValue = 0.0;
+        double totalCurrentValue = 0.0;
+        
+        for (UserHolding holding : holdings) {
+            HoldingValuation valuation = calculateHoldingValuation(holding);
+            
+            // Add to portfolio totals
+            totalInvestedValue += valuation.investedValue();
+            totalCurrentValue += valuation.currentValue();
+            
+            // Create and add the holding DTO
+            holdingDTOs.add(createHoldingDTO(holding, valuation));
+        }
+        
+        // Calculate overall profit/loss
+        double totalProfitLoss = totalCurrentValue - totalInvestedValue;
+        double totalProfitLossPercentage = calculatePercentage(totalProfitLoss, totalInvestedValue);
+        
+        return new PortfolioSummary(
+            holdingDTOs,
+            totalInvestedValue,
+            totalCurrentValue,
+            totalProfitLoss,
+            totalProfitLossPercentage
+        );
+    }
+    
+    /**
+     * Calculate valuation metrics for a single holding
+     */
+    private HoldingValuation calculateHoldingValuation(UserHolding holding) {
+        Script script = holding.getScript();
+        Double currentNavValue = getLatestNavValue(script.getId());
+        
+        // Calculate current value based on latest NAV
+        double currentValue = holding.getUnits() * currentNavValue;
+        
+        // Get invested value from the holding
+        double investedValue = holding.getTotalValue();
+        
+        // Calculate profit/loss
+        double profitLoss = currentValue - investedValue;
+        double profitLossPercentage = calculatePercentage(profitLoss, investedValue);
+        
+        return new HoldingValuation(
+            currentNavValue,
+            currentValue,
+            investedValue,
+            profitLoss,
+            profitLossPercentage
+        );
+    }
+    
+    /**
+     * Calculate percentage safely handling division by zero
+     */
+    private double calculatePercentage(double value, double base) {
+        return base > 0 ? (value / base) * 100 : 0.0;
+    }
+    
+    /**
+     * Create a holding DTO with all required information
+     */
+    private UserHoldingDTO createHoldingDTO(UserHolding holding, HoldingValuation valuation) {
+        Script script = holding.getScript();
+        
+        return new UserHoldingDTO(
+            holding.getId(),
+            script.getId(),
+            script.getFundCode(),
+            script.getName(),
+            script.getCategory(),
+            script.getAmc(),
+            holding.getUnits(),
+            valuation.currentNavValue(),
+            valuation.currentValue(),
+            valuation.investedValue(),
+            valuation.profitLoss(),
+            valuation.profitLossPercentage()
+        );
+    }
+    
+    /**
+     * Record containing valuation metrics for a single holding
+     */
+    private record HoldingValuation(double currentNavValue, double currentValue, double investedValue,
+                                    double profitLoss, double profitLossPercentage) {}
+    
+    /**
+     * Class to hold portfolio summary information
+     */
+    private record PortfolioSummary(List<UserHoldingDTO> holdings, double totalInvestedValue, double totalCurrentValue,
+                                    double totalProfitLoss, double totalProfitLossPercentage
+    ) {
+        /**
+         * Convert to a DTO for the API response
+         */
+        UserPortfolioDTO toPortfolioDTO(CamsUser user) {
+            return new UserPortfolioDTO(
+                user.getId(),
+                user.getUsername(),
+                holdings,
+                totalInvestedValue,
+                totalCurrentValue,
+                totalProfitLoss,
+                totalProfitLossPercentage
+            );
+        }
+    }
+
+    /**
+     * Get the latest NAV value for a script
+     * 
+     * @param scriptId The ID of the script
+     * @return The latest NAV value
+     */
+    private Double getLatestNavValue(Long scriptId) {
+        Script script = scriptRepository.findById(scriptId)
+                .orElseThrow(() -> new EntityNotFoundException("Script not found with ID: " + scriptId));
+        
+        // Find the latest NAV for the script
+        Optional<Nav> latestNav = navRepository.findByScriptAndDate(script, LocalDate.now());
+        
+        return latestNav.map(Nav::getNavValue)
+                .orElseThrow(() -> new EntityNotFoundException("No NAV found for script ID: " + scriptId));
     }
 }
