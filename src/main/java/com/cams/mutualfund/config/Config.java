@@ -1,4 +1,4 @@
-package com.cams.mutualfund.service;
+package com.cams.mutualfund.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

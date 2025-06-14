@@ -1,7 +1,7 @@
 package com.cams.mutualfund.controller;
 
 import com.cams.mutualfund.data.request.TransactionRequest;
-import com.cams.mutualfund.exceptions.GlobalExceptionHandler;
+import com.cams.mutualfund.handler.GlobalExceptionHandler;
 import com.cams.mutualfund.facade.IUserTransactionFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

@@ -8,7 +8,7 @@ import com.cams.mutualfund.data.request.CreateScriptRequest;
 import com.cams.mutualfund.data.request.NavRequest;
 import com.cams.mutualfund.data.request.UserRegistrationRequest;
 import com.cams.mutualfund.exceptions.DuplicateUsernameException;
-import com.cams.mutualfund.exceptions.GlobalExceptionHandler;
+import com.cams.mutualfund.handler.GlobalExceptionHandler;
 import com.cams.mutualfund.service.AdminService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
