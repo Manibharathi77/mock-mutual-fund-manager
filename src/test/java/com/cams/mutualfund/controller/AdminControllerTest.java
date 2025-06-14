@@ -7,6 +7,7 @@ import com.cams.mutualfund.data.dto.UserDTO;
 import com.cams.mutualfund.data.request.CreateScriptRequest;
 import com.cams.mutualfund.data.request.NavRequest;
 import com.cams.mutualfund.data.request.UserRegistrationRequest;
+import com.cams.mutualfund.exceptions.DuplicateUsernameException;
 import com.cams.mutualfund.exceptions.GlobalExceptionHandler;
 import com.cams.mutualfund.service.AdminService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +26,8 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AdminControllerTest {
 
@@ -35,7 +37,7 @@ class AdminControllerTest {
 
     @Mock
     private AdminService adminService;
-    
+
     @InjectMocks
     private AdminController adminController;
 
@@ -86,8 +88,8 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/scripts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createScriptRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createScriptRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value(201))
                 .andExpect(jsonPath("$.message").value("Script created successfully"))
@@ -110,13 +112,13 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/scripts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
         verify(adminService, never()).createScript(any(CreateScriptRequest.class));
     }
-    
+
     @Test
     void createScript_WhenServiceThrowsException_ShouldReturnBadRequest() throws Exception {
         // Arrange
@@ -125,8 +127,8 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/scripts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createScriptRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createScriptRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Script already exists"));
@@ -141,8 +143,8 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/scripts/{fundCode}/nav", "TEST123")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(navRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(navRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value(201))
                 .andExpect(jsonPath("$.message").value("NAV added successfully"));
@@ -158,13 +160,13 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/scripts/{fundCode}/nav", "TEST123")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
         verify(adminService, never()).addNavForToday(anyString(), anyDouble());
     }
-    
+
     @Test
     void addTodayNav_WhenScriptNotFound_ShouldReturnBadRequest() throws Exception {
         // Arrange
@@ -173,8 +175,8 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/scripts/{fundCode}/nav", "TEST999")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(navRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(navRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Script not found with code: TEST999"));
@@ -202,7 +204,7 @@ class AdminControllerTest {
 
         verify(adminService).getAllUsers();
     }
-    
+
     @Test
     void listAllUsers_WhenServiceThrowsException_ShouldReturnServerError() throws Exception {
         // Arrange
@@ -225,8 +227,8 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createUserRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createUserRequest)))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("User registered successfully"))
@@ -247,13 +249,13 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
         verify(adminService, never()).registerUser(any(UserRegistrationRequest.class));
     }
-    
+
     @Test
     void createUser_WhenUsernameAlreadyExists_ShouldReturnBadRequest() throws Exception {
         // Arrange
@@ -262,11 +264,29 @@ class AdminControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/admin/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createUserRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createUserRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Username already exists"));
+
+        verify(adminService).registerUser(any(UserRegistrationRequest.class));
+    }
+
+    @Test
+    void createUser_WhenDuplicateUsernameExceptionThrown_ShouldReturnBadRequest() throws Exception {
+        // Arrange
+        String username = "testuser";
+        when(adminService.registerUser(any(UserRegistrationRequest.class)))
+                .thenThrow(new DuplicateUsernameException(username));
+
+        // Act & Assert
+        mockMvc.perform(post("/v1/api/admin/users/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createUserRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Username 'testuser' already exists"));
 
         verify(adminService).registerUser(any(UserRegistrationRequest.class));
     }

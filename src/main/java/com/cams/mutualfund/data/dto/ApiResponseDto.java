@@ -98,17 +98,6 @@ public class ApiResponseDto<T> {
         return fieldErrors;
     }
 
-    public void setFieldErrors(Map<String, String> fieldErrors) {
-        this.fieldErrors = fieldErrors;
-    }
-
-    public void addFieldError(String field, String errorMessage) {
-        if (this.fieldErrors == null) {
-            this.fieldErrors = new HashMap<>();
-        }
-        this.fieldErrors.put(field, errorMessage);
-    }
-
     // Static factory methods for common responses
     public static <T> ApiResponseDto<T> ok(String message, T data) {
         return new ApiResponseDto<>(200, message, data);
