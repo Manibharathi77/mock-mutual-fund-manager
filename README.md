@@ -61,8 +61,6 @@ The application implements a security model using Spring Security with Basic Aut
 
 ## ER Diagram
 
-![Editor _ Mermaid Chart-2025-06-14-151836.png](src%2Fmain%2Fresources%2FERDiagram%2FEditor%20_%20Mermaid%20Chart-2025-06-14-151836.png)
-
 ```mermaid
 erDiagram
     CamsUser {
