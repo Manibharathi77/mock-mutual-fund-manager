@@ -4,8 +4,8 @@ import com.cams.mutualfund.data.Roles;
 import com.cams.mutualfund.data.dao.CamsUser;
 import com.cams.mutualfund.data.dao.Script;
 import com.cams.mutualfund.data.request.CreateScriptRequest;
-import com.cams.mutualfund.data.request.CreateUserRequest;
 import com.cams.mutualfund.data.request.NavRequest;
+import com.cams.mutualfund.data.request.UserRegistrationRequest;
 import com.cams.mutualfund.service.AdminService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +39,7 @@ class AdminControllerTest {
     private Script testScript;
     private CreateScriptRequest createScriptRequest;
     private CamsUser testUser;
-    private CreateUserRequest createUserRequest;
+    private UserRegistrationRequest createUserRequest;
     private NavRequest navRequest;
 
     @BeforeEach
@@ -61,7 +61,7 @@ class AdminControllerTest {
         testUser = new CamsUser("testuser", "password", Roles.USER);
         testUser.setId(1L);
 
-        createUserRequest = new CreateUserRequest(
+        createUserRequest = new UserRegistrationRequest(
                 "testuser",
                 "password",
                 Roles.USER.name()
@@ -175,17 +175,15 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value("User created successfully"));
 
-        verify(adminService).createUser(
-                createUserRequest.username(),
-                createUserRequest.password(),
-                createUserRequest.role()
+        verify(adminService).registerUser(
+                createUserRequest
         );
     }
 
     @Test
     void createUser_WithInvalidRequest_ShouldReturnBadRequest() throws Exception {
         // Arrange
-        CreateUserRequest invalidRequest = new CreateUserRequest(
+        UserRegistrationRequest invalidRequest = new UserRegistrationRequest(
                 "", // Empty username
                 "password",
                 Roles.USER.name()

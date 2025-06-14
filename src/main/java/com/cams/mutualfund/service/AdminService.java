@@ -4,7 +4,10 @@ import com.cams.mutualfund.data.Roles;
 import com.cams.mutualfund.data.dao.CamsUser;
 import com.cams.mutualfund.data.dao.Nav;
 import com.cams.mutualfund.data.dao.Script;
+import com.cams.mutualfund.data.dto.UserDTO;
 import com.cams.mutualfund.data.request.CreateScriptRequest;
+import com.cams.mutualfund.data.request.UserRegistrationRequest;
+import com.cams.mutualfund.exceptions.DuplicateUsernameException;
 import com.cams.mutualfund.repository.NavRepository;
 import com.cams.mutualfund.repository.ScriptRepository;
 import com.cams.mutualfund.repository.UserRepository;
@@ -84,19 +87,28 @@ public class AdminService {
         return users;
     }
 
-    public void createUser(String username, String password, String roleName) {
-        logger.info("Creating new user with username: {}, role: {}", username, roleName);
-        
-        if (userRepository.findByUsername(username).isPresent()) {
-            logger.warn("User creation failed: Username {} already exists", username);
-            throw new IllegalArgumentException("Username already exists");
+    /**
+     * Registers a new user.
+     *
+     * @param user the user registration request
+     * @return the registered user DTO
+     * @throws DuplicateUsernameException if the username already exists
+     */
+    public UserDTO registerUser(UserRegistrationRequest user) {
+        logger.info("Processing registration request for username: {}", user.username());
+
+        if (userRepository.findByUsername(user.username()).isPresent()) {
+            logger.warn("Registration failed: Username '{}' already exists", user.username());
+            throw new DuplicateUsernameException(user.username());
         }
 
-        Roles role = Roles.valueOf(roleName.toUpperCase());
-        String encodedPassword = passwordEncoder.encode(password);
+        logger.debug("Username available, proceeding with registration");
+        CamsUser savedCamsUser = userRepository.save(new CamsUser(user.username(),
+                passwordEncoder.encode(user.password()),
+                Roles.valueOf(user.role())));
 
-        CamsUser savedUser = userRepository.save(new CamsUser(username, encodedPassword, role));
-        logger.info("User created successfully with ID: {}", savedUser.getId());
+        logger.info("User successfully registered with ID: {}", savedCamsUser.getId());
+        return new UserDTO(savedCamsUser.getId(), savedCamsUser.getUsername(), savedCamsUser.getRole().name());
     }
 
     public void deleteUser(Long userId) {

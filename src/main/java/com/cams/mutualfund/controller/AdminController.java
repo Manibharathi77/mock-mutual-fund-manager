@@ -3,9 +3,10 @@ package com.cams.mutualfund.controller;
 import com.cams.mutualfund.data.dao.CamsUser;
 import com.cams.mutualfund.data.dao.Script;
 import com.cams.mutualfund.data.dto.ApiResponseDto;
+import com.cams.mutualfund.data.dto.UserDTO;
 import com.cams.mutualfund.data.request.CreateScriptRequest;
-import com.cams.mutualfund.data.request.CreateUserRequest;
 import com.cams.mutualfund.data.request.NavRequest;
+import com.cams.mutualfund.data.request.UserRegistrationRequest;
 import com.cams.mutualfund.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,7 +26,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/v1/api/admin")
 @Tag(name = "Admin Operations", description = "APIs for administrative operations")
-//@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private static final Logger logger = LogManager.getLogger(AdminController.class);
@@ -81,19 +81,19 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponseDto.ok("Users retrieved successfully", users));
     }
 
-    @PostMapping("/users")
-    @Operation(summary = "Create a new user", description = "Creates a new user with the provided details")
+    @PostMapping("/register")
+    @Operation(summary = "Register a new user", description = "Creates a new user with the provided details")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data")
+            @ApiResponse(responseCode = "200", description = "User registered successfully",
+                    content = @Content(schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "409", description = "Username already exists")
     })
-    public ResponseEntity<ApiResponseDto<?>> createUser(@Valid @RequestBody CreateUserRequest request) {
-        logger.info("Creating new user with username: {}, role: {}", request.username(), request.role());
-        adminService.createUser(request.username(), request.password(), request.role());
-        logger.info("User created successfully: {}", request.username());
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponseDto.created("User created successfully", null));
+    public ResponseEntity<ApiResponseDto<UserDTO>> registerUser(@Valid @RequestBody UserRegistrationRequest user) {
+        logger.info("Received registration request for username: {}", user.username());
+        UserDTO registeredUser = adminService.registerUser(user);
+        logger.info("User registration successful for username: {}", user.username());
+        return ResponseEntity.ok(ApiResponseDto.ok("User registered successfully", registeredUser));
     }
 
     @DeleteMapping("/users/{userId}")
