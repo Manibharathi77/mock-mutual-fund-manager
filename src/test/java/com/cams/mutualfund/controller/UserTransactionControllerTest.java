@@ -2,7 +2,7 @@ package com.cams.mutualfund.controller;
 
 import com.cams.mutualfund.data.request.TransactionRequest;
 import com.cams.mutualfund.exceptions.GlobalExceptionHandler;
-import com.cams.mutualfund.service.UserTransactionService;
+import com.cams.mutualfund.facade.IUserTransactionFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class UserTransactionControllerTest {
     private ObjectMapper objectMapper;
 
     @Mock
-    private UserTransactionService userTransactionService;
+    private IUserTransactionFacade userTransactionFacade;
     
     @InjectMocks
     private UserTransactionController userTransactionController;
@@ -49,7 +49,7 @@ class UserTransactionControllerTest {
     @Test
     void buyUnits_WithValidRequest_ShouldReturnOkStatus() throws Exception {
         // Arrange
-        doNothing().when(userTransactionService).buyUnits(anyLong(), anyLong(), anyDouble());
+        doNothing().when(userTransactionFacade).buyUnits(anyLong(), anyLong(), anyDouble());
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/transactions/buy")
@@ -59,7 +59,7 @@ class UserTransactionControllerTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("Units purchased successfully"));
 
-        verify(userTransactionService).buyUnits(
+        verify(userTransactionFacade).buyUnits(
                 validRequest.userId(),
                 validRequest.scriptId(),
                 validRequest.units()
@@ -77,7 +77,7 @@ class UserTransactionControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(userTransactionService, never()).buyUnits(anyLong(), anyLong(), anyDouble());
+        verify(userTransactionFacade, never()).buyUnits(anyLong(), anyLong(), anyDouble());
     }
 
     @Test
@@ -91,13 +91,13 @@ class UserTransactionControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(userTransactionService, never()).buyUnits(anyLong(), anyLong(), anyDouble());
+        verify(userTransactionFacade, never()).buyUnits(anyLong(), anyLong(), anyDouble());
     }
 
     @Test
     void buyUnits_WithUserNotFound_ShouldReturnServerError() throws Exception {
         // Arrange
-        doThrow(new RuntimeException("CamsUser not found")).when(userTransactionService)
+        doThrow(new RuntimeException("CamsUser not found")).when(userTransactionFacade)
                 .buyUnits(anyLong(), anyLong(), anyDouble());
 
         // Act & Assert
@@ -108,7 +108,7 @@ class UserTransactionControllerTest {
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").value("Unexpected error: CamsUser not found"));
 
-        verify(userTransactionService).buyUnits(
+        verify(userTransactionFacade).buyUnits(
                 validRequest.userId(),
                 validRequest.scriptId(),
                 validRequest.units()
@@ -118,7 +118,7 @@ class UserTransactionControllerTest {
     @Test
     void redeemUnits_WithValidRequest_ShouldReturnOkStatus() throws Exception {
         // Arrange
-        doNothing().when(userTransactionService).redeemUnits(anyLong(), anyLong(), anyDouble());
+        doNothing().when(userTransactionFacade).redeemUnits(anyLong(), anyLong(), anyDouble());
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/transactions/redeem")
@@ -128,7 +128,7 @@ class UserTransactionControllerTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("Units redeemed successfully"));
 
-        verify(userTransactionService).redeemUnits(
+        verify(userTransactionFacade).redeemUnits(
                 validRequest.userId(),
                 validRequest.scriptId(),
                 validRequest.units()
@@ -146,13 +146,13 @@ class UserTransactionControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(userTransactionService, never()).redeemUnits(anyLong(), anyLong(), anyDouble());
+        verify(userTransactionFacade, never()).redeemUnits(anyLong(), anyLong(), anyDouble());
     }
 
     @Test
     void redeemUnits_WithInsufficientUnits_ShouldReturnBadRequest() throws Exception {
         // Arrange
-        doThrow(new IllegalArgumentException("Insufficient units to redeem. Available: 10.0")).when(userTransactionService)
+        doThrow(new IllegalArgumentException("Insufficient units to redeem. Available: 10.0")).when(userTransactionFacade)
                 .redeemUnits(anyLong(), anyLong(), anyDouble());
 
         // Act & Assert
@@ -163,7 +163,7 @@ class UserTransactionControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Insufficient units to redeem. Available: 10.0"));
 
-        verify(userTransactionService).redeemUnits(
+        verify(userTransactionFacade).redeemUnits(
                 validRequest.userId(),
                 validRequest.scriptId(),
                 validRequest.units()
@@ -181,6 +181,6 @@ class UserTransactionControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(userTransactionService, never()).redeemUnits(anyLong(), anyLong(), anyDouble());
+        verify(userTransactionFacade, never()).redeemUnits(anyLong(), anyLong(), anyDouble());
     }
 }
