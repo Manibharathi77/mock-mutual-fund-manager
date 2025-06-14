@@ -23,10 +23,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/v1/api/auth/users/register").permitAll()
+                        .requestMatchers("/v1/api/admin/users/register").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/v1/api/auth/users/register").permitAll()
                         .requestMatchers("/v1/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/v1/api/transactions/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userDetailsService)

@@ -53,7 +53,6 @@ public class UserTransactionService {
     public void redeemUnits(Long userId, Long scriptId, double unitsToRedeem) {
         logger.info("Processing redemption transaction - User ID: {}, Script ID: {}, Units: {}", userId, scriptId, unitsToRedeem);
 
-        validatePositiveUnits(unitsToRedeem);
         TransactionContext context = prepareTransactionContext(userId, scriptId);
 
         UserHolding holding = getUserHolding(context.camsUser, context.script);
@@ -159,6 +158,8 @@ public class UserTransactionService {
     }
 
     // Record transaction
+    // TODO: Create a separate entity for this request to avoid sending more arguments for this.
+    // TODO: User BUILDER PATTERN to form the request, so that when number of args change, it's extensible.
     private void recordTransaction(CamsUser camsUser, Script script, TransactionType type,
                                    double units, double amount, double navValue) {
         Transaction transaction = new Transaction();
@@ -172,14 +173,6 @@ public class UserTransactionService {
 
         Transaction savedTxn = transactionRepository.save(transaction);
         logger.debug("Transaction recorded with ID: {}", savedTxn.getId());
-    }
-
-    // Validate that units are positive
-    private void validatePositiveUnits(double units) {
-        if (units <= 0) {
-            logger.warn("Transaction failed: Units must be positive, received: {}", units);
-            throw new IllegalArgumentException("Units must be positive");
-        }
     }
 
     // Validate that user has sufficient units

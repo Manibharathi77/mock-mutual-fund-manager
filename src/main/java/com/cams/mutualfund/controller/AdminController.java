@@ -81,7 +81,7 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponseDto.ok("Users retrieved successfully", users));
     }
 
-    @PostMapping("/register")
+    @PostMapping("/users/register")
     @Operation(summary = "Register a new user", description = "Creates a new user with the provided details")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User registered successfully",
