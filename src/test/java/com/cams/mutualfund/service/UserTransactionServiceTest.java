@@ -85,7 +85,7 @@ class UserTransactionServiceTest {
     void buyUnits_WithValidInputs_ShouldBuyUnits() {
         // Arrange
         when(userHoldingRepository.findByCamsUserAndScript(testUser, testScript)).thenReturn(Optional.of(existingHolding));
-        
+
         // Make a copy of the existing holding to avoid modifying the original
         UserHolding holdingCopy = new UserHolding();
         holdingCopy.setId(existingHolding.getId());
@@ -93,15 +93,15 @@ class UserTransactionServiceTest {
         holdingCopy.setScript(existingHolding.getScript());
         holdingCopy.setUnits(existingHolding.getUnits());
         holdingCopy.setTotalValue(existingHolding.getTotalValue());
-        
+
         when(userHoldingRepository.findByCamsUserAndScript(testUser, testScript)).thenReturn(Optional.of(holdingCopy));
-        
+
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
             Transaction savedTransaction = invocation.getArgument(0);
             savedTransaction.setId(1L); // Set an ID for the saved transaction
             return savedTransaction;
         });
-        
+
         // Act
         userTransactionService.buyUnits(userId, scriptId, amount);
 
@@ -115,7 +115,7 @@ class UserTransactionServiceTest {
         ArgumentCaptor<UserHolding> holdingCaptor = ArgumentCaptor.forClass(UserHolding.class);
         verify(userHoldingRepository).save(holdingCaptor.capture());
         UserHolding updatedHolding = holdingCaptor.getValue();
-        
+
         // Print debug values
         System.out.println("Original units: " + existingHolding.getUnits());
         System.out.println("Units to add: " + units);
@@ -123,7 +123,7 @@ class UserTransactionServiceTest {
         System.out.println("Actual units: " + updatedHolding.getUnits());
         System.out.println("Expected total value: " + (existingHolding.getUnits() + units) * navValue);
         System.out.println("Actual total value: " + updatedHolding.getTotalValue());
-        
+
         assertEquals(existingHolding.getUnits() + units, updatedHolding.getUnits());
         assertEquals((existingHolding.getUnits() + units) * navValue, updatedHolding.getTotalValue(), 0.001);
 
@@ -131,7 +131,7 @@ class UserTransactionServiceTest {
         ArgumentCaptor<Transaction> transactionCaptor = ArgumentCaptor.forClass(Transaction.class);
         verify(transactionRepository).save(transactionCaptor.capture());
         Transaction savedTransaction = transactionCaptor.getValue();
-        
+
         assertEquals(testUser, savedTransaction.getCamsUser());
         assertEquals(testScript, savedTransaction.getScript());
         assertEquals(TransactionType.BUY, savedTransaction.getType());
@@ -165,7 +165,7 @@ class UserTransactionServiceTest {
         ArgumentCaptor<UserHolding> holdingCaptor = ArgumentCaptor.forClass(UserHolding.class);
         verify(userHoldingRepository).save(holdingCaptor.capture());
         UserHolding savedHolding = holdingCaptor.getValue();
-        
+
         assertEquals(testUser, savedHolding.getCamsUser());
         assertEquals(testScript, savedHolding.getScript());
         assertEquals(units, savedHolding.getUnits());
@@ -175,7 +175,7 @@ class UserTransactionServiceTest {
         ArgumentCaptor<Transaction> transactionCaptor = ArgumentCaptor.forClass(Transaction.class);
         verify(transactionRepository).save(transactionCaptor.capture());
         Transaction savedTransaction = transactionCaptor.getValue();
-        
+
         assertEquals(testUser, savedTransaction.getCamsUser());
         assertEquals(testScript, savedTransaction.getScript());
         assertEquals(TransactionType.BUY, savedTransaction.getType());
@@ -217,7 +217,7 @@ class UserTransactionServiceTest {
             savedTransaction.setId(1L); // Set an ID for the saved transaction
             return savedTransaction;
         });
-        
+
         // Make a copy of the existing holding to avoid modifying the original
         UserHolding holdingCopy = new UserHolding();
         holdingCopy.setId(existingHolding.getId());
@@ -225,9 +225,9 @@ class UserTransactionServiceTest {
         holdingCopy.setScript(existingHolding.getScript());
         holdingCopy.setUnits(existingHolding.getUnits());
         holdingCopy.setTotalValue(existingHolding.getTotalValue());
-        
+
         when(userHoldingRepository.findByCamsUserAndScript(testUser, testScript)).thenReturn(Optional.of(holdingCopy));
-        
+
         // Act
         userTransactionService.redeemUnits(userId, scriptId, unitsToRedeem);
 
@@ -241,7 +241,7 @@ class UserTransactionServiceTest {
         ArgumentCaptor<UserHolding> holdingCaptor = ArgumentCaptor.forClass(UserHolding.class);
         verify(userHoldingRepository).save(holdingCaptor.capture());
         UserHolding updatedHolding = holdingCaptor.getValue();
-        
+
         // Print debug values
         System.out.println("Original units: " + existingHolding.getUnits());
         System.out.println("Units to redeem: " + unitsToRedeem);
@@ -249,10 +249,10 @@ class UserTransactionServiceTest {
         System.out.println("Actual units: " + updatedHolding.getUnits());
         System.out.println("Expected total value: " + updatedHolding.getUnits() * navValue);
         System.out.println("Actual total value: " + updatedHolding.getTotalValue());
-        
+
         // The units should be the original units minus the redeemed units
         assertEquals(existingHolding.getUnits() - unitsToRedeem, updatedHolding.getUnits());
-        
+
         // The total value should be the updated units times the NAV value
         assertEquals(updatedHolding.getUnits() * navValue, updatedHolding.getTotalValue(), 0.001); // Using delta for double comparison
 
@@ -302,7 +302,7 @@ class UserTransactionServiceTest {
         secondHolding.setId(2L);
 
         List<UserHolding> userHoldings = Arrays.asList(existingHolding, secondHolding);
-        
+
         // Current NAV values (different from invested NAV to test profit/loss calculation)
         Nav latestNav1 = new Nav(LocalDate.now(), 30.0, testScript); // NAV increased to 30.0
         Nav latestNav2 = new Nav(LocalDate.now(), 18.0, secondScript); // NAV decreased to 18.0
@@ -310,11 +310,11 @@ class UserTransactionServiceTest {
         // Mock repository calls
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(userHoldingRepository.findByCamsUser(testUser)).thenReturn(userHoldings);
-        
+
         // Mock script repository calls for both scripts
         when(scriptRepository.findById(testScript.getId())).thenReturn(Optional.of(testScript));
         when(scriptRepository.findById(secondScript.getId())).thenReturn(Optional.of(secondScript));
-        
+
         when(navRepository.findByScriptAndDate(eq(testScript), any(LocalDate.class))).thenReturn(Optional.of(latestNav1));
         when(navRepository.findByScriptAndDate(eq(secondScript), any(LocalDate.class))).thenReturn(Optional.of(latestNav2));
 

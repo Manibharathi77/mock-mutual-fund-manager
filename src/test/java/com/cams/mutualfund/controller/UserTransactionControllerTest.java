@@ -1,6 +1,7 @@
 package com.cams.mutualfund.controller;
 
 import com.cams.mutualfund.data.request.TransactionRequest;
+import com.cams.mutualfund.exceptions.GlobalExceptionHandler;
 import com.cams.mutualfund.service.UserTransactionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,9 @@ class UserTransactionControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(userTransactionController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(userTransactionController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
         objectMapper = new ObjectMapper();
 
         // Set up valid transaction request
@@ -92,7 +95,7 @@ class UserTransactionControllerTest {
     }
 
     @Test
-    void buyUnits_WithUserNotFound_ShouldReturnNotFound() throws Exception {
+    void buyUnits_WithUserNotFound_ShouldReturnServerError() throws Exception {
         // Arrange
         doThrow(new RuntimeException("CamsUser not found")).when(userTransactionService)
                 .buyUnits(anyLong(), anyLong(), anyDouble());
@@ -101,7 +104,9 @@ class UserTransactionControllerTest {
         mockMvc.perform(post("/v1/api/transactions/buy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validRequest)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value("Unexpected error: CamsUser not found"));
 
         verify(userTransactionService).buyUnits(
                 validRequest.userId(),
@@ -147,14 +152,16 @@ class UserTransactionControllerTest {
     @Test
     void redeemUnits_WithInsufficientUnits_ShouldReturnBadRequest() throws Exception {
         // Arrange
-        doThrow(new RuntimeException("Insufficient units for redemption")).when(userTransactionService)
+        doThrow(new IllegalArgumentException("Insufficient units to redeem. Available: 10.0")).when(userTransactionService)
                 .redeemUnits(anyLong(), anyLong(), anyDouble());
 
         // Act & Assert
         mockMvc.perform(post("/v1/api/transactions/redeem")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Insufficient units to redeem. Available: 10.0"));
 
         verify(userTransactionService).redeemUnits(
                 validRequest.userId(),
